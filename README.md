@@ -6,4 +6,5 @@ This service recieve data and track it
 
 # Start Redis
 
-```docker-compose up # in root directory```
+```docker-compose up```
+in root directory
