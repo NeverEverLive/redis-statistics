@@ -8,3 +8,7 @@ This service recieve data and track it
 
 ```docker-compose up```
 in root directory
+
+# Install dependencies
+
+```poetry install```
