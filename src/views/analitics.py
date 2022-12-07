@@ -14,8 +14,9 @@ def check_redis():
     try:
         session = get_session()
         session.set("foo", "bar")
-        logging.warning(session.get("foo")) 
-        logging.warning(session.get("320 x 240"))
+        for key in session.scan_iter():
+            logging.warning(key)
+            logging.warning(session.get(key))
         return {
             "message": "Redis is working"
         }
