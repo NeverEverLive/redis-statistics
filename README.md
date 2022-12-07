@@ -1,6 +1,5 @@
 # redis-statistics
 
-This service work with [a link](https://github.com/NeverEverLive/simple-async-api/blob/main)
+This service work with this [service](https://github.com/NeverEverLive/simple-async-api)
 
-
-```https://github.com/NeverEverLive/simple-async-api```
+This service recieve data and track this
