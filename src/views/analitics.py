@@ -1,4 +1,5 @@
 import logging
+import asyncio
 
 from fastapi import APIRouter
 
@@ -10,13 +11,20 @@ router = APIRouter(prefix="/analitics")
 
 
 @router.get("", response_model=BaseResponse, status_code=200)
-def check_redis():
+async def check_redis():
     try:
-        session = get_session()
-        session.set("foo", "bar")
-        for key in session.scan_iter():
-            logging.warning(key)
-            logging.warning(session.get(key))
+        session = await get_session()
+        await session.set("foo", "bar")
+        await session.set("asd", "qwe")
+        logging.warning(await session.scan())
+        keys = list(map(lambda x: x.decode("utf-8"), (await session.scan())[1]))
+        tasks = [asyncio.create_task(session.get(key)) for key in keys]
+        results = list(map(lambda x: x.decode(), await asyncio.gather(*tasks)))
+        
+        for index in range(len(results)):
+            logging.warning(keys[index])
+            logging.warning(results[index])
+
         return {
             "message": "Redis is working"
         }
@@ -27,17 +35,24 @@ def check_redis():
 
 
 @router.post("", response_model=BaseResponse, status_code=200)
-def collect_data(stats: RedisStats):
-    logging.warning(stats.dict())
-    for key, value in stats.dict().items():
-        logging.warning(key)
-        logging.warning(value)
+async def collect_data(stats: RedisStats):
+    keys = []
+    options = []
+
+    for value in stats.dict().values():
         if value:
-            session = get_session()
-            if stat := session.get(value):
-                session.set(value, int(stat.decode()) + 1)
-            else:
-                session.set(value, 1)
+            session = await get_session()
+            options.append(asyncio.create_task(session.get(value)))
+            keys.append(value)
+
+    tasks = []
+    
+    for index, stat in enumerate(list(map(lambda x: int(x.decode()), await asyncio.gather(*options)))):
+        if stat:
+            tasks.append(asyncio.create_task(session.set(keys[index], stat + 1)))
+        else:
+            tasks.append(asyncio.create_task(session.set(keys[index], 1)))
+    
     return {
         "message": "Analitics is collected",
     }
